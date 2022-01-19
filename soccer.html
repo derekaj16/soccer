@@ -1,0 +1,344 @@
+<!--
+    Derek Johnson
+    Section 4
+    IS 303
+
+    Description: This  program allows the user to play a soccer tournament
+    By entering the number of games the home team will play and then 
+    entering the opponents that the home team will face.
+-->
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Soccer Tournament</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, intial-scale=1.0">
+        <style>
+            html {
+                height: 100%;
+            }
+            body {
+                background-color: #eeeeee;
+                font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                min-height: 100%;
+                padding: 10px;
+            }
+            #current-score {
+                padding: 20px;
+                border-radius: 15px;
+                background-color:rgb(214, 214, 214);
+                font: inherit;
+                font-weight: bold;
+                font-size: 30px;
+                width: 100px;
+                text-align: center;
+                opacity: 0;
+                transition-duration: .25s;
+            }
+            .cursor {
+                width: 4px;
+                background-color: black;
+                display: inline-block;
+                opacity: 0;
+                margin-left: 0;
+            }
+            .cursor.typing {
+                opacity: 1;
+            }
+            .error-message {
+                color: red;
+                font-size: 1em;
+                margin-top: 10px;
+                opacity: 0;
+            }
+            h1 {
+                text-align: center;
+            }
+            .main-content {
+                display: flex;
+                align-items: center;
+                flex-direction: column;
+                width: 500px;
+            }
+            #my-team-name {
+                font-size: 1.5em;
+                font-weight: bold;
+                opacity: 0;
+                transition-duration: .25s;
+                padding: 5px;
+            }
+            .restart {
+                background-color: rgb(214, 214, 214);
+                padding: 15px;
+                font: inherit;
+                font-weight: bold;
+                border: none;
+                border-radius: 10px;
+                margin-top: 15px;
+                cursor: pointer;
+                opacity: 0;
+                transition: .15s;
+            }
+            .restart:hover {
+                background-color:rgb(172, 172, 172);
+            }
+            #results {
+                font: inherit;
+                font-size: 1.5em;
+                font-weight: bold;
+                display: block;
+                padding: 30px;
+            }
+            .user-input {
+                background-color: rgb(214, 214, 214);
+                width: 100%;
+                border-radius: 10px;
+                height: 30px;
+                border: none;
+                margin-top: 10px;
+                padding: 15px;
+                font: inherit;
+                font-size: 1.3em;
+                text-align: center;
+                opacity: 0;
+                transform: translate(0px, 10px);
+                animation: fadeIn 0.5s ease-out 3.25s 1 normal forwards, rise 0.5s ease-out 3.25s 1 normal forwards;
+            }
+            .user-input:focus {
+                outline: none;
+            }
+            @keyframes fadeIn {
+                100% { opacity: 1; }
+            }
+            @keyframes rise {
+                80% { transform: translate(0, -9px); }
+                100% { transform: translate(0px, -10px); }
+            }
+            @media (max-width: 389px) {
+                .main-content {
+                    flex-grow: 1;
+                }
+            }
+        </style>
+    </head>
+
+
+    <body onload="runProgram()">
+        <!-- Questions to ask the user-->
+        <div class="main-content">
+            <h1><span class="typed-text"></span><span class="cursor">&nbsp;</span></h1>
+            <input class="user-input" autocomplete="off" autofocus></input>
+            <span class="error-message">Please enter a valid number</span>
+        </div>
+
+        <!-- Current Score Tracker -->
+        <div id="my-team-name">My Team</div>
+        <div id="current-score"><span id="won">0</span> - <span id="lost">0</span></div>
+        <div id="results"></div>
+
+        <button class="restart" onclick="window.location.reload()">Try Again</button>
+
+
+        <!-- JAVASCRIPT CODE -->
+        <script>
+            /* DECLARE VARIABLES */
+            const typingDelay = 80;
+            const typedText = document.querySelector(".typed-text");
+            const cursor = document.querySelector(".cursor");
+            const userInput = document.querySelector(".user-input");
+            const results = document.getElementById("results");
+            const errorMessage = document.getElementsByClassName("error-message")[0];
+            let askTeamName = "Type your team name below";
+            let askNumGames = "How many games will you play?";
+            let askOppTeams = "Enter the name for opponent ";
+            let final = "Final Results";
+            let myTeam;
+            let oppTeams = [];
+            let numGames;
+            let myScore;
+            let oppScore;
+            let gamesWon = 0;
+            let gamesLost = 0;
+            let gameIndex = 0;
+            let charIndex = 0;
+            let isComplete = false;
+
+
+            // Clear any leftover content
+            typedText.textContent = '';
+            errorMessage.style.opacity = 0;
+            // Begin program
+            setTimeout(function() {
+                typeText(askTeamName)
+            }, 1000);
+
+            /* MAIN FUNCTION */
+            userInput.addEventListener("keyup", function(event) {
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    
+                    if (!isComplete) {
+                        return;
+                    }
+                    // Ask for the team name
+                    else if (typedText.textContent === askTeamName) {
+                        // Checking for no input
+                        if (userInput.value == '') {
+                            errorMessage.textContent = "Please enter a name for the team";
+                            errorMessage.style.opacity = 1;
+                        } else {
+                            // Get the name
+                            myTeam = userInput.value;
+
+                            // Clear values and display next question
+                            typedText.textContent = '';
+                            typeText(askNumGames);
+                            userInput.value = '';
+                            errorMessage.style.opacity = 0;
+                        }
+                    } 
+                    
+                    // Ask for the number of games they want to play
+                    else if (typedText.textContent === askNumGames) {
+                        // Checking for bad input
+                        if (isNaN(userInput.value) == true || userInput.value < 1) {
+                            userInput.value = '';
+                            errorMessage.textContent = "Please enter a valid number";
+                            errorMessage.style.opacity = 1;
+                        } else {
+                            // Get the number of games
+                            numGames = parseInt(userInput.value);
+                            
+                            // Clear input box
+                            typedText.textContent = '';
+                            userInput.value = '';
+                            errorMessage.style.opacity = 0;
+
+                            // Show box with current score
+                            typeText(askOppTeams + (gameIndex + 1));
+                            document.getElementById("my-team-name").innerHTML = myTeam;
+                            document.getElementById("my-team-name").style.opacity = 1;
+                            document.getElementById("current-score").style.opacity = 1;
+                        }
+                    }
+
+                    else if (numGames != null && gameIndex != (numGames - 1)) {
+                        if (userInput.value == '') {
+                            // Display error message
+                            errorMessage.textContent = "Please enter a name for the team";
+                            errorMessage.style.opacity = 1;
+                        } else {
+                            // Get the name of the team
+                            oppTeams[gameIndex] = userInput.value;
+                            gameIndex++;
+
+                            // Clear prompt, input, and error message
+                            userInput.value = '';
+                            typedText.textContent = '';
+                            errorMessage.style.opacity = 0;
+
+                            // Play the game! Display current score
+                            playGame();
+                            document.getElementById("won").innerHTML = gamesWon;
+                            document.getElementById("lost").innerHTML = gamesLost;
+
+                            // Type the next prompt
+                            typeText(askOppTeams + (gameIndex + 1));
+                        }
+                    }
+
+                    else {
+                        if (userInput.value == '') {
+                            // Display error message
+                            errorMessage.textContent = "Please enter a name for the team";
+                            errorMessage.style.opacity = 1;
+                        } else {
+                            // Get the name of the team
+                            oppTeams[gameIndex] = userInput.value;
+                            gameIndex++;
+
+                            // Play the game! Display current score
+                            playGame();
+                            document.getElementById("won").innerHTML = gamesWon;
+                            document.getElementById("lost").innerHTML = gamesLost;
+
+                            // Clear prompt, input, and error message
+                            // Get rid of input bar
+                            userInput.value = '';
+                            typedText.textContent = '';
+                            errorMessage.style.opacity = 0;
+                            document.getElementsByClassName("user-input")[0].style.display = "none";
+                            errorMessage.style.display = "none";
+
+                            // Print the Final Results and show restart button
+                            typeText(final);
+                            printResults();
+                            document.getElementsByClassName("restart")[0].style.opacity = 1;
+                        }
+                    }
+                }
+            });
+
+            /* HELPER FUNCTIONS */
+            function playGame() {
+                do {
+                    myScore = Math.floor(Math.random() * 10);
+                    oppScore = Math.floor(Math.random() * 10);
+                } while (myScore == oppScore);
+
+                if (myScore > oppScore) {
+                    gamesWon++;
+                }
+                else {
+                    gamesLost++;
+                }
+            }
+
+            function printResults() {
+                // Color the background depending on if they won or not
+                if (gamesWon > gamesLost) {
+                    document.getElementById("current-score").style.backgroundColor = "rgb(24, 190, 121)";
+                } else if (gamesWon < gamesLost) {
+                    document.getElementById("current-score").style.backgroundColor = "rgb(246, 150, 150)";
+                }
+
+                // Determine path of home team
+                if (gamesWon / numGames >= 0.75) {
+                    results.innerHTML = "NCAA Women's Soccer Tournament";
+                } else if (gamesWon / numGames >= 0.5) {
+                    results.innerHTML = "Alternate Candidate for Covid"
+                } else {
+                    results.innerHTML = "See you next year";
+                }
+            }
+
+            function typeText(stringToType) {
+                //Make sure that no input is entered until function is done
+                isComplete = false;
+                //Type next character until string is done
+                if (charIndex < stringToType.length) {
+                    if (!cursor.classList.contains("typing")) {
+                        cursor.classList.add("typing");
+                    }
+                    typedText.textContent += stringToType.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(function() {
+                        typeText(stringToType);
+                    }, typingDelay);
+                } else {
+                    // Reset
+                    cursor.classList.remove("typing");
+                    charIndex = 0;
+                    //Say that the function is done
+                    isComplete = true;
+                }
+            }
+        </script>
+    </body>
+</html>
